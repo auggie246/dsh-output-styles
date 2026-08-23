@@ -1,42 +1,114 @@
 # dsh-output-styles
 
-A dynamic [Cordis](https://deepseek-ai.github.io/dsh/) plugin for the DeepSeek
-Harness (DSH) that tweaks the agent's **output style** — inspired by Claude
-Code's `/output-style` — and is configurable through the DSH web **Settings**
-panel.
+Claude Code-style **output styles for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web** (`dsh web`): pick how the agent writes its responses — **Concise**, **Explanatory**, **Learning**, **Formal**, or your own **Custom** instructions — from a page in Settings.
 
 ## How it works
 
-- **Host half** (`plugin/host.js`) registers a `systemPrompt` section named
-  `output-style` (order 5, right after the persona). Its text is a provider
-  evaluated at *every* prompt assembly, so style changes apply from the next
-  model step without a restart. Current state is exposed to the browser through
-  a Package-private JSON RPC (`harness.handle` → `host.call`).
-- **Client half** (`plugin/client.js`) registers an "Output Style" page in the
-  `settings.section` Slot of the web GUI with a radio list of the built-in
-  styles and a textarea for the custom style.
-
-State is transient by design (dynamic plugins are process-local): it is held in
-Host memory for the lifetime of the plugin run and resets on harness restart.
+- The host half registers a global `output-style` section in the harness
+  `systemPrompt` registry (order 5, right after the persona). Its text is
+  re-evaluated at **every prompt assembly**, so changing the style applies
+  from the **next model step** — no new session, no restart.
+- The selection is stored in the harness settings document
+  (`output-styles` namespace in `~/.dsh/settings.yaml`), so it **survives
+  `dsh web` restarts**.
+- The browser half adds an **Output Style** page to the Settings panel with a
+  radio list of the built-in styles and a textarea for the custom style.
 
 ## Built-in styles
 
-| Style       | Effect                                                          |
-| ----------- | --------------------------------------------------------------- |
-| Default     | No style instructions added.                                    |
-| Concise     | Short, telegraphic answers; result first; no recaps.            |
-| Explanatory | Adds reasoning, rejected alternatives, and tradeoffs.           |
-| Learning    | Teaches while working; best practices and pitfalls.             |
-| Formal      | Documentation tone: headings, precise terms, numbered steps.    |
-| Custom      | Your own free-form style instructions.                          |
+| Style       | Effect                                                       |
+| ----------- | ------------------------------------------------------------ |
+| Default     | No style instructions added.                                 |
+| Concise     | Short, telegraphic answers; result first; no recaps.         |
+| Explanatory | Adds reasoning, rejected alternatives, and tradeoffs.        |
+| Learning    | Teaches while working; best practices and pitfalls.          |
+| Formal      | Documentation tone: headings, precise terms, numbered steps. |
+| Custom      | Your own free-form style instructions.                       |
 
-## Running it
+## Requirements
 
-The plugin is defined and activated through the DSH agent itself
-(`cordis_define` + `cordis_run`); the source files in `plugin/` are the
-canonical record of the two halves. Ask the agent in a DSH session:
+- A [DeepSeek Harness](https://www.npmjs.com/package/@deepseek-ai/dsh) deployment (`@deepseek-ai/dsh` 0.1.0-rc.7 or compatible) with the **web profile** (`dsh web`).
 
-> Define and run the output-style plugin from `plugin/host.js` and
-> `plugin/client.js`.
+## Install — option A: permanent plugin (recommended)
 
-Then open **Settings → Output Style** in the web GUI and pick a style.
+This is the standard out-of-tree DSH plugin path; it survives restarts.
+
+```sh
+# 1. Get the package
+git clone https://github.com/YOUR-USER/dsh-output-styles.git
+cd dsh-output-styles
+
+# 2. Install it into the web profile (pnpm add under the hood)
+dsh plugin --profile web add /path/to/dsh-output-styles
+```
+
+3. Append the composition row from [`cordis.patch.example.yml`](cordis.patch.example.yml) to your profile patch layer:
+
+```yaml
+# ~/.dsh/profiles/web/cordis.patch.yml
+- insert:
+    - id: output-styles
+      name: 'dsh-output-styles'
+```
+
+4. **Restart `dsh web`**, open the Settings panel, and choose **Output Style**.
+
+### Uninstall
+
+Remove the `- insert:` block above from `cordis.patch.yml`, then:
+
+```sh
+dsh plugin --profile web remove dsh-output-styles
+```
+
+Restart `dsh web`. The `output-styles` section in `~/.dsh/settings.yaml` is harmless data; delete it if you want it gone.
+
+## Install — option B: session-only dynamic plugin (zero install)
+
+No files touch your DSH deployment — an agent defines the plugin into the
+running DSH process. It disappears when that process restarts, and the style
+selection lives only in that process's memory. See
+[`dynamic/README.md`](dynamic/README.md); the short version: give your DSH
+agent this prompt —
+
+> Read `dynamic/dsh-output-styles.dynamic.json` from this repo. Call `cordis_define` with a new plugin, using its `name` and `description`, and its `host` and `client` strings as `code.host` and `code.client`. Then `cordis_run` the returned package; I'll approve the activation.
+
+When both forms are active at once (e.g. testing option B while option A is
+installed), both contribute their own prompt section — pick one form.
+
+## Usage
+
+Open **Settings → Output Style**, pick a style, send any message. The style
+is injected into the system prompt of every agent on the deployment from the
+next model step on.
+
+## Development
+
+```
+lib/            composition package (the permanent install)
+  index.js      host plugin: settings namespace + systemPrompt section + outputStyles remote
+  remote.js     Typert manifest + strict JSON codecs + gateway class + preset catalog
+  client.js     browser half (window.__ModuleLoader__ wrapper)
+dynamic/        session-only install form (agent-defined dynamic plugin)
+  host.js, client.js, dsh-output-styles.dynamic.json (generated), README.md
+scripts/        bundle-dynamic.mjs — regenerates the single-file bundle
+cordis.patch.example.yml — the composition row to copy into a profile
+```
+
+Both distribution forms share behavior; keep them in sync. After editing
+`dynamic/host.js` or `dynamic/client.js`, run `npm run bundle:dynamic` and
+commit the regenerated bundle. The dynamic form keeps its own state in memory;
+the permanent form persists it in the settings document —
+`lib/remote.js` (`PRESETS`) is the shared style catalog. `npm test`
+syntax-checks the `lib/` files.
+
+## Limitations
+
+- Session-only installs (option B) vanish on DSH restart by design, and their
+  selection is not persisted.
+- The style section is global to the deployment (option A): it shapes every
+  agent on that `dsh web` instance, not per-session choices.
+
+## License
+
+[MIT](LICENSE)
