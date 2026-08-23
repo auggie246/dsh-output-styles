@@ -1,6 +1,6 @@
 # dsh-output-styles
 
-Claude Code-style **output styles for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web** (`dsh web`): pick how the agent writes its responses — **Concise**, **Explanatory**, **Learning**, **Formal**, or your own **Custom** instructions — from a page in Settings.
+Persistent **output styles for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web** (`dsh web`): choose a built-in style or create, edit, and delete named styles from Settings.
 
 ## How it works
 
@@ -8,11 +8,11 @@ Claude Code-style **output styles for [DeepSeek Harness](https://github.com/deep
   `systemPrompt` registry (order 5, right after the persona). Its text is
   re-evaluated at **every prompt assembly**, so changing the style applies
   from the **next model step** — no new session, no restart.
-- The selection is stored in the harness settings document
-  (`output-styles` namespace in `~/.dsh/settings.yaml`), so it **survives
-  `dsh web` restarts**.
-- The browser half adds an **Output Style** page to the Settings panel with a
-  radio list of the built-in styles and a textarea for the custom style.
+- The selection and named user styles are stored in the harness settings
+  document (`output-styles` namespace in `~/.dsh/settings.yaml`), so they
+  **survive `dsh web` restarts**.
+- The browser half adds an **Output Style** page to Settings. The page selects
+  built-in styles and creates, edits, or deletes named user styles.
 
 ## Built-in styles
 
@@ -23,7 +23,6 @@ Claude Code-style **output styles for [DeepSeek Harness](https://github.com/deep
 | Explanatory | Adds reasoning, rejected alternatives, and tradeoffs.        |
 | Learning    | Teaches while working; best practices and pitfalls.          |
 | Formal      | Documentation tone: headings, precise terms, numbered steps. |
-| Custom      | Your own free-form style instructions.                       |
 
 ## Requirements
 
@@ -78,16 +77,18 @@ installed), both contribute their own prompt section — pick one form.
 
 ## Usage
 
-Open **Settings → Output Style**, pick a style, send any message. The style
-is injected into the system prompt of every agent on the deployment from the
-next model step on.
+Open **Settings → Output Style**. Choose a built-in style or create a named
+style with your own instructions. The selected style enters every agent's
+system prompt from the next model step. Permanent-plugin user styles remain
+available after `dsh web` restarts.
 
 ## Development
 
 ```
 lib/            composition package (the permanent install)
   index.js      host plugin: settings namespace + systemPrompt section + outputStyles remote
-  remote.js     Typert manifest + strict JSON codecs + gateway class + preset catalog
+  catalog.js    built-in catalog + stored-state helpers
+  remote.js     Typert manifest + strict JSON codecs + gateway class
   client.js     browser half (window.__ModuleLoader__ wrapper)
 dynamic/        session-only install form (agent-defined dynamic plugin)
   host.js, client.js, dsh-output-styles.dynamic.json (generated), README.md
@@ -95,12 +96,12 @@ scripts/        bundle-dynamic.mjs — regenerates the single-file bundle
 cordis.patch.example.yml — the composition row to copy into a profile
 ```
 
-Both distribution forms share behavior; keep them in sync. After editing
-`dynamic/host.js` or `dynamic/client.js`, run `npm run bundle:dynamic` and
-commit the regenerated bundle. The dynamic form keeps its own state in memory;
-the permanent form persists it in the settings document —
-`lib/remote.js` (`PRESETS`) is the shared style catalog. `npm test`
-syntax-checks the `lib/` files.
+Both distribution forms share catalog behavior; keep them in sync. After
+editing `dynamic/host.js` or `dynamic/client.js`, run `npm run bundle:dynamic`
+and commit the regenerated bundle. The dynamic form keeps its catalog in
+memory. The permanent form persists its catalog in the settings document.
+`lib/catalog.js` is the permanent form's catalog source. `npm test` checks the
+`lib/` files and runs the catalog tests.
 
 ## Limitations
 

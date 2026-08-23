@@ -1,6 +1,6 @@
 {
   "name": "dsh-output-styles",
-  "description": "Claude Code-style output styles for DeepSeek Harness Web: a configurable system-prompt style section (Concise, Explanatory, Learning, Formal, Custom) with a page in Settings, persisted across restarts",
+  "description": "Persistent output styles for DeepSeek Harness Web: choose a built-in style or create named styles from the Settings page",
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
@@ -29,7 +29,7 @@
   ],
   "scripts": {
     "bundle:dynamic": "node scripts/bundle-dynamic.mjs",
-    "test": "node --check lib/client.js && node --input-type=module --check < lib/index.js && node --input-type=module --check < lib/remote.js"
+    "test": "node --check lib/client.js && node --input-type=module --check < lib/index.js && node --input-type=module --check < lib/remote.js && node --input-type=module --check < lib/catalog.js && node --test"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",

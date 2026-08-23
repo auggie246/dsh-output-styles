@@ -3,8 +3,8 @@
 These files are the **dynamic Cordis plugin** form of dsh-output-styles: the
 same output-style selector, but installed into a *running* DSH process by an
 agent (the `cordis_define`/`cordis_run` tools) with zero changes to the
-deployment. It disappears when that DSH process restarts, and its selection
-is kept in process memory only.
+deployment. It disappears when that DSH process restarts. Its selection and
+user-created styles remain in process memory only.
 
 - `host.js` — the `code.host` function body (prompt section + state RPC).
 - `client.js` — the `code.client` function body (the Settings page).

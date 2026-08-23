@@ -1,10 +1,8 @@
 // Output Style — Host half (plain JavaScript, dynamic Cordis Plugin).
 //
-// Registers a configurable "output style" section in the system prompt. The
-// section text is a provider evaluated at EVERY prompt assembly, so changing
-// the style in the web settings UI applies from the next model step — no
-// restart required. Exposes a Package-private JSON API to the Client half
-// (harness.handle / host.call).
+// This dynamic form supports the same named style catalog as the permanent
+// plugin. Its catalog remains process-local because dynamic plugins do not own
+// a durable settings namespace.
 
 const PRESETS = [
   {
@@ -51,38 +49,53 @@ const PRESETS = [
       'precise terminology, numbered lists for procedures, and complete sentences. ' +
       'Avoid colloquialisms and first-person asides.',
   },
-  {
-    id: 'custom',
-    label: 'Custom',
-    description: 'Write your own style instructions below.',
-    prompt: '',
-  },
 ];
 
-const MAX_CUSTOM_LENGTH = 4000;
+const MAX_USER_STYLES = 50;
+const MAX_STYLE_NAME_LENGTH = 80;
+const MAX_STYLE_INSTRUCTIONS_LENGTH = 4000;
 
 return {
   apply(ctx) {
-    const state = {
-      mode: 'default',
-      custom: '',
-    };
+    const state = { selectedId: 'default', userStyles: [] };
     const presetIds = {};
     for (const preset of PRESETS) presetIds[preset.id] = true;
 
-    function currentStyleText() {
-      if (state.mode === 'custom') return state.custom.trim();
-      for (const preset of PRESETS) {
-        if (preset.id === state.mode) return preset.prompt;
-      }
-      return '';
+    function isKnownStyle(styleId) {
+      if (presetIds[styleId] === true) return true;
+      return state.userStyles.some((style) => style.id === styleId);
     }
 
-    // The system-prompt contribution. `text` is re-evaluated at each assembly,
-    // which happens before every model step, so live settings take effect on
-    // the next step. An empty text renders nothing ("default" contributes no
-    // instructions). Order 5 places the style right after the persona (0)
-    // and before tool guidance (100–199).
+    function currentStyleText() {
+      for (const preset of PRESETS) {
+        if (preset.id === state.selectedId) return preset.prompt;
+      }
+      const style = state.userStyles.find((entry) => entry.id === state.selectedId);
+      return style ? style.instructions.trim() : '';
+    }
+
+    function result() {
+      return {
+        selectedId: state.selectedId,
+        userStyles: state.userStyles.map((style) => ({ ...style })),
+        presets: PRESETS.map((preset) => ({
+          id: preset.id,
+          label: preset.label,
+          description: preset.description,
+        })),
+      };
+    }
+
+    function draft(args) {
+      const name = typeof args.name === 'string' ? args.name.trim() : '';
+      const instructions = typeof args.instructions === 'string' ? args.instructions : '';
+      if (name === '') throw new Error('style name is required');
+      if (name.length > MAX_STYLE_NAME_LENGTH) throw new Error('style name is too long');
+      if (instructions.trim() === '') throw new Error('style instructions are required');
+      if (instructions.length > MAX_STYLE_INSTRUCTIONS_LENGTH) throw new Error('style instructions are too long');
+      return { name, instructions };
+    }
+
     const systemPrompt = ctx.get('systemPrompt');
     if (systemPrompt !== undefined) {
       systemPrompt.section({
@@ -103,33 +116,38 @@ return {
       console.error('systemPrompt service is unavailable; output style will not apply.');
     }
 
-    // Package-private JSON API for the Client settings page.
-    harness.handle('output-style/get', () => {
-      return {
-        mode: state.mode,
-        custom: state.custom,
-        presets: PRESETS.map((preset) => ({
-          id: preset.id,
-          label: preset.label,
-          description: preset.description,
-        })),
-      };
+    harness.handle('output-style/get', () => result());
+
+    harness.handle('output-style/select', (args) => {
+      if (!args || !isKnownStyle(args.styleId)) throw new Error('unknown style: ' + String(args && args.styleId));
+      state.selectedId = args.styleId;
+      return result();
     });
 
-    harness.handle('output-style/set', (args) => {
-      if (args === null || typeof args !== 'object') {
-        return { ok: false, error: 'invalid arguments' };
+    harness.handle('output-style/save', (args) => {
+      if (!args || typeof args !== 'object') throw new Error('invalid arguments');
+      const value = draft(args);
+      let styleId = typeof args.styleId === 'string' ? args.styleId : '';
+      if (styleId === '') {
+        if (state.userStyles.length >= MAX_USER_STYLES) throw new Error('too many user styles');
+        styleId = 'user:' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+        state.userStyles.push({ id: styleId, ...value });
+      } else {
+        const index = state.userStyles.findIndex((style) => style.id === styleId);
+        if (index === -1) throw new Error('unknown user style: ' + styleId);
+        state.userStyles[index] = { id: styleId, ...value };
       }
-      const mode = args.mode;
-      if (typeof mode !== 'string' || presetIds[mode] !== true) {
-        return { ok: false, error: 'unknown mode: ' + String(mode) };
-      }
-      state.mode = mode;
-      if (typeof args.custom === 'string') {
-        state.custom = args.custom.slice(0, MAX_CUSTOM_LENGTH);
-      }
-      console.log('output style set to ' + state.mode);
-      return { ok: true, mode: state.mode };
+      state.selectedId = styleId;
+      return result();
+    });
+
+    harness.handle('output-style/remove', (args) => {
+      const styleId = args && args.styleId;
+      const index = state.userStyles.findIndex((style) => style.id === styleId);
+      if (index === -1) throw new Error('unknown user style: ' + String(styleId));
+      state.userStyles.splice(index, 1);
+      if (state.selectedId === styleId) state.selectedId = 'default';
+      return result();
     });
   },
 };
