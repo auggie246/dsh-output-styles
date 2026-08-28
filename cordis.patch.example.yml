@@ -1,11 +1,14 @@
-# Example composition row for dsh-output-styles.
+# Example composition row for @auggieteo/dsh-output-styles.
 #
 # Append this entry to your web profile's patch layer at
 #   $DSH_HOME/profiles/web/cordis.patch.yml   (usually ~/.dsh/profiles/web/cordis.patch.yml)
 # then restart `dsh web`.
 #
-# Remove it (and run `dsh plugin --profile web remove dsh-output-styles`) to uninstall.
+# `name` must match the installed package name (npm name). `id` is the local
+# cordis service id and does not need to match.
+#
+# Remove it (and run `dsh plugin --profile web remove @auggieteo/dsh-output-styles`) to uninstall.
 
 - insert:
     - id: output-styles
-      name: 'dsh-output-styles'
+      name: '@auggieteo/dsh-output-styles'

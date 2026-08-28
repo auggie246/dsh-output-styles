@@ -1,9 +1,26 @@
 {
-  "name": "dsh-output-styles",
+  "name": "@auggieteo/dsh-output-styles",
   "description": "Persistent output styles for DeepSeek Harness Web: choose a built-in style or create named styles from the Settings page",
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
+  "author": {
+    "name": "auggieteo"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/auggie246/dsh-output-styles.git"
+  },
+  "homepage": "https://github.com/auggie246/dsh-output-styles#readme",
+  "bugs": "https://github.com/auggie246/dsh-output-styles/issues",
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "output-style"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
@@ -28,6 +45,7 @@
     "LICENSE"
   ],
   "scripts": {
+    "prepare": "npm run bundle:dynamic",
     "bundle:dynamic": "node scripts/bundle-dynamic.mjs",
     "test": "node --check lib/client.js && node --input-type=module --check < lib/index.js && node --input-type=module --check < lib/remote.js && node --input-type=module --check < lib/catalog.js && node --test"
   },
