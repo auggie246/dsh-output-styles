@@ -94,6 +94,23 @@ unchanged, so no data moves. Update both places in lockstep, then restart:
    e.g. a `file:` path, and remove the old `dsh-output-styles` entry).
 2. In `~/.dsh/profiles/web/cordis.patch.yml`: set the insert `name:` to
    `'@auggieteo/dsh-output-styles'`.
+3. Run `pnpm install` in the profile directory to relink `node_modules`.
+
+### Troubleshooting: "TYPERT manifest names package ..." crash at boot
+
+If `dsh web` fails with
+
+```
+typert-loader: <installed-name> TYPERT manifest names package "@auggieteo/dsh-output-styles"
+— the manifest must be owned by the package that exports it
+```
+
+the plugin is installed under a different dependency key than its npm name
+(for example the pre-rename `dsh-output-styles` with a `file:`/`link:` path).
+The typert-loader requires the manifest's `package` field to equal the
+dependency key it was loaded under. Apply the three-step lockstep update
+above: the dependency key in `package.json`, the insert `name:` in
+`cordis.patch.yml`, and the npm package name must all be the same string.
 
 ## Install — session-only dynamic plugin (zero install)
 
