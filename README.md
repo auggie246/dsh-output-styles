@@ -128,9 +128,34 @@ plugin is installed), both contribute their own prompt section — pick one form
 ## Usage
 
 Open **Settings → Output Style**. Choose a built-in style or create a named
-style with your own instructions. The selected style enters every agent's
-system prompt from the next model step. Permanent-plugin user styles remain
-available after `dsh web` restarts.
+style with a name, an optional description, and your own instructions. The
+selected style enters every agent's system prompt from the next model step.
+Permanent-plugin user styles remain available after `dsh web` restarts.
+
+### Editing a style in place
+
+**Edit** turns the style's own row into the edit form; no edit form opens
+below the list. **Save style** or **Cancel** returns the row to its normal
+display. The **Create output style** form hides while an edit is open and
+comes back afterwards.
+
+### Markdown instructions
+
+The Instructions field takes Markdown and uses a monospace font. When the
+field is empty, its placeholder shows a complete example: an output style
+file with `---` frontmatter.
+
+### Pasting style files with frontmatter
+
+The Instructions field accepts a whole style file. When the pasted text starts
+with a `---` frontmatter block (Claude Code output styles, Agent Skills
+`SKILL.md`), the page extracts `name` and `description` into their fields and
+stores only the body as instructions. Other frontmatter keys
+(`keep-coding-instructions`, `disable-model-invocation`, `metadata`, …) are
+reported as ignored: this plugin appends its section to the system prompt, so
+the harness coding instructions are always kept and behavior flags have no
+effect. Only flat `key: value` frontmatter is supported; nested mappings under
+unknown keys are skipped.
 
 ## Built-in styles
 
@@ -147,7 +172,7 @@ available after `dsh web` restarts.
 ```
 lib/            composition package (the permanent install)
   index.js      host plugin: settings namespace + systemPrompt section + outputStyles remote
-  catalog.js    built-in catalog + stored-state helpers
+  catalog.js    built-in catalog + stored-state helpers + frontmatter parsing
   remote.js     Typert manifest + strict JSON codecs + gateway class
   client.js     browser half (window.__ModuleLoader__ wrapper)
 dynamic/        session-only install form (agent-defined dynamic plugin)
