@@ -8,15 +8,7 @@ Output styles for [DeepSeek Harness](https://www.npmjs.com/package/@deepseek-ai/
 dsh plugin --profile web add @auggieteo/dsh-output-styles
 ```
 
-Then append the composition row from [`cordis.patch.example.yml`](cordis.patch.example.yml) to `~/.dsh/profiles/web/cordis.patch.yml`:
-
-```yaml
-- insert:
-    - id: output-styles
-      name: '@auggieteo/dsh-output-styles'
-```
-
-Restart `dsh web` and open **Settings → Output Style**.
+Restart `dsh web` and open **Settings → Output Style**. No manual wiring: the package ships a bundle patch, and `dsh plugin add` joins it to the profile's layer stack (`dsh.profile.bundles`) automatically. `dsh plugin --profile web remove` unwires it the same way.
 
 Requires `@deepseek-ai/dsh` 0.1.0-rc.7 or compatible with the web profile, and Node.js 20+. All runtime dependencies are peers provided by DSH.
 
@@ -28,6 +20,18 @@ dsh plugin --profile web add /path/to/dsh-output-styles           # from a local
 ```
 
 Git installs run a `prepare` build that pnpm blocks until allowlisted: add the exact key pnpm prints under `allowBuilds` in `~/.dsh/profiles/web/pnpm-workspace.yaml`, then re-run the same command.
+
+### Manual wiring (only when managing dependencies by hand)
+
+If you add the dependency without `dsh plugin add`, append the composition row from [`cordis.patch.example.yml`](cordis.patch.example.yml) to `~/.dsh/profiles/web/cordis.patch.yml`:
+
+```yaml
+- insert:
+    - id: output-styles
+      name: '@auggieteo/dsh-output-styles'
+```
+
+The `name` must match the installed package name; the `id` is your local cordis service id. Skip this row when the package is already listed under `dsh.profile.bundles` — the bundle patch supplies it.
 
 ## Usage
 
@@ -74,7 +78,7 @@ The frontmatter parser and the style draft resolver exist as byte-identical mark
 ## FAQ
 
 **The Settings panel has no Output Style page.**
-The plugin is not wired: check the `insert:` row in `~/.dsh/profiles/web/cordis.patch.yml` and restart `dsh web`.
+The plugin is not wired: re-run `dsh plugin --profile web add @auggieteo/dsh-output-styles` (it joins `dsh.profile.bundles` automatically) and restart `dsh web`. If you manage the dependency by hand, check the manual wiring row instead.
 
 **`dsh web` crashes at boot with `TYPERT manifest names package ...`.**
 The plugin is installed under a different dependency key than its npm name (for example, the pre-rename `dsh-output-styles` with a `file:`/`link:` path). The dependency key in `~/.dsh/profiles/web/package.json`, the insert `name:` in `cordis.patch.yml`, and the package name must all be the same string, `@auggieteo/dsh-output-styles`. Renaming does not move data: the cordis plugin id (`output-styles`), the settings namespace, and stored styles are unchanged.
