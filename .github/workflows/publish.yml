@@ -1,0 +1,72 @@
+name: Publish to npm
+
+# Publishes @auggieteo/dsh-output-styles when a GitHub release is published.
+#
+# Auth is npm trusted publishing (OIDC): the npm side is configured with
+# repository auggie246/dsh-output-styles, workflow filename publish.yml, and
+# no environment. All three must keep matching this file. No NPM_TOKEN and
+# no NODE_AUTH_TOKEN anywhere: setting one would make npm fall back to token
+# auth instead of the OIDC exchange.
+#
+# Provenance is generated automatically by npm on publish (public repo, no
+# flag needed). Trusted publishing requires npm >= 11.5.1 and Node >= 22.14,
+# so npm is upgraded before publish.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # required for OIDC trusted publishing
+
+concurrency:
+  group: npm-publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the released commit
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      # Fails the run instead of publishing the wrong version when the
+      # release tag and package.json drift apart. Accepts tags with or
+      # without a leading "v".
+      - name: Check the tag matches the package version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "::error::Release tag ${GITHUB_REF_NAME} does not match package.json version ${VERSION}. Fix one of them, then publish the release again."
+            exit 1
+          fi
+          echo "Release ${GITHUB_REF_NAME} matches package version ${VERSION}"
+
+      # The runner image may ship an npm older than 11.5.1, the minimum for
+      # OIDC trusted publishing. This package has no native dependencies, so
+      # upgrading npm first is safe.
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      # There is no package-lock.json in the repo, so npm ci would fail here.
+      # npm install also runs the prepare script, which regenerates
+      # dynamic/dsh-output-styles.dynamic.json with the released version.
+      - name: Install dependencies
+        run: npm install
+
+      - name: Test
+        run: npm test
+
+      - name: Publish
+        run: npm publish
