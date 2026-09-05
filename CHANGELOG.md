@@ -13,6 +13,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- README rewritten to the [Standard Readme](https://github.com/RichardLitt/standard-readme)
+  spec; the package description drops one word so the Short Description stays
+  under 120 characters.
 - Compatibility with `@deepseek-ai/dsh` 0.1.2-rc.1 while staying on 0.1.1-rc.2.
   The audit of the tag-to-tag diff found no breaking API change for this
   plugin: `settings.register/get/update`, `systemPrompt.section`, the

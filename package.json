@@ -1,6 +1,6 @@
 {
   "name": "@auggieteo/dsh-output-styles",
-  "description": "Persistent output styles for DeepSeek Harness Web: choose a built-in style or create named styles from the Settings page",
+  "description": "Persistent output styles for DeepSeek Harness Web: pick a built-in style or create named styles from the Settings page",
   "version": "0.4.0",
   "type": "module",
   "license": "MIT",
