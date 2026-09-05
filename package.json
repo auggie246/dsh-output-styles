@@ -1,7 +1,7 @@
 {
   "name": "@auggieteo/dsh-output-styles",
   "description": "Persistent output styles for DeepSeek Harness Web: choose a built-in style or create named styles from the Settings page",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "license": "MIT",
   "publishConfig": {
@@ -37,7 +37,8 @@
     },
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime"
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-web"
       ],
       "platform": "web"
     }
@@ -58,7 +59,7 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-typert-protocol": "^0.1.0-rc.7",
+    "@deepseek-ai/dsh-typert-protocol": "^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-rc.1",
     "@deepseek-ai/schemastery": "^3.18.1",
     "react": "^18.2.0"
   }

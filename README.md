@@ -10,7 +10,9 @@ dsh plugin --profile web add @auggieteo/dsh-output-styles
 
 Restart `dsh web` and open **Settings → Output Style**. No manual wiring: the package ships a bundle patch, and `dsh plugin add` joins it to the profile's layer stack (`dsh.profile.bundles`) automatically. `dsh plugin --profile web remove` unwires it the same way.
 
-Requires `@deepseek-ai/dsh` 0.1.0-rc.7 or compatible with the web profile, and Node.js 20+. All runtime dependencies are peers provided by DSH.
+Tested against `@deepseek-ai/dsh` 0.1.1-rc.2 and 0.1.2-rc.1 (web profile); requires Node.js 20+. All runtime dependencies are peers provided by DSH.
+
+The client manifest lists both harness bootstraps under `dsh.client.inject` (`@deepseek-ai/dsh-client-runtime` for 0.1.1-rc.x, `@deepseek-ai/dsh-client-web` for 0.1.2-rc.1 and later): 0.1.2 dissolved the old runtime package, and every loader so far silently skips an inject name it does not ship, so one manifest works on both lines.
 
 Other sources:
 

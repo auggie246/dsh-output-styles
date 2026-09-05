@@ -50,3 +50,23 @@ test('composition example resolves the installed package name', async () => {
   const example = await readFile(new URL('../cordis.patch.example.yml', import.meta.url), 'utf8')
   assert.match(example, new RegExp(`name: '${pkg.name.replace(/[/@]/g, (c) => `\\${c}`)}'`))
 })
+
+test('client manifest injects both harness bootstraps (legacy and 0.1.2+)', () => {
+  const client = pkg.dsh.client
+  assert.equal(client.platform, 'web')
+  // dsh-client-runtime was the web bootstrap up to 0.1.1-rc.2; 0.1.2-rc.1
+  // dissolved it into dsh-client-web. Both loaders skip unknown inject
+  // names, so listing both keeps the ordering edge on each harness.
+  assert.ok(client.inject.includes('@deepseek-ai/dsh-client-runtime'), 'legacy bootstrap missing from dsh.client.inject')
+  assert.ok(client.inject.includes('@deepseek-ai/dsh-client-web'), 'current bootstrap missing from dsh.client.inject')
+})
+
+test('typert-protocol peer range admits every supported harness prerelease', () => {
+  const range = pkg.peerDependencies['@deepseek-ai/dsh-typert-protocol']
+  // Strict semver only matches a prerelease when a comparator carries a
+  // prerelease tag on the same major.minor.patch tuple, so each supported
+  // harness line needs its own caret clause.
+  assert.match(range, /\^0\.1\.0-rc\.7/)
+  assert.match(range, /\^0\.1\.1-rc\.2/)
+  assert.match(range, /\^0\.1\.2-rc\.1/)
+})

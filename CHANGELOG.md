@@ -4,6 +4,37 @@ All notable changes to this project are documented in this file. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-09-05
+
+### Added
+
+- New identity tests lock the dual inject list and the per-tuple peer
+  clauses against drift.
+
+### Changed
+
+- Compatibility with `@deepseek-ai/dsh` 0.1.2-rc.1 while staying on 0.1.1-rc.2.
+  The audit of the tag-to-tag diff found no breaking API change for this
+  plugin: `settings.register/get/update`, `systemPrompt.section`, the
+  `Remote` decorator + `TypertRemoteService` mount, the gateway `$mount`
+  descriptor contract and `{ok, value}` envelope, the `slots.inject/register`
+  contract, the `settings.section` slot, the `dsh.bundle.patch` install
+  path, and the dynamic-plugin builtins (`harness.handle`, `host.call`,
+  `styles.insert`) all kept their shapes.
+- `dsh.client.inject` now lists both harness bootstraps:
+  `@deepseek-ai/dsh-client-runtime` (0.1.1-rc.x) and
+  `@deepseek-ai/dsh-client-web` (0.1.2-rc.1 dissolved the former). Loaders
+  on both versions silently skip an inject name they do not ship, so the
+  ordering edge degrades to a no-op instead of a break.
+- `@deepseek-ai/dsh-typert-protocol` peer range widened to
+  `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-rc.1`. Strict semver matches a
+  prerelease only when a comparator carries a prerelease tag on the same
+  tuple, so each supported harness line has its own clause; this keeps the
+  peer resolving to the harness's own protocol copy (a second, older copy
+  would mount a remote service with no methods).
+- New identity tests lock the dual inject list and the per-tuple peer
+  clauses against drift.
+
 ## [0.3.0] - 2026-09-01
 
 ### Added
