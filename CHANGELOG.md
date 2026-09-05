@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.1] - 2026-09-05
+
+### Changed
+
+- Ships the Standard Readme README and the trimmed package description to
+  npm. 0.4.0 was published before the rewrite, and a published npm version
+  is immutable, so the docs ride this release instead. No code changes
+  since 0.4.0.
+
 ## [0.4.0] - 2026-09-05
 
 ### Added
