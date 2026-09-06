@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.2] - 2026-09-06
+
+### Added
+
+- `scripts/patch-dsh-settings-nav-icon.mjs`: patches the installed DSH settings
+  shell so the `output-styles` nav row in Settings shows an edit-pen icon
+  (`IconEditOutline16`) instead of the generic settings-gear fallback. The
+  branch also matches `output-style`, the id the dynamic-Plugin face registers.
+  The icon mapping is DSH shell chrome that this plugin cannot reach through
+  the `settings.section` slot (it accepts only `id`, `order`, `label`). The
+  insert is idempotent, marked `// dsh-output-styles`, and coexists with the
+  dsh-mcp-adapter insert; `--revert` restores the original bytes. A DSH upgrade
+  replaces the patched file, so re-run the script afterwards, then restart
+  `dsh web` and refresh the page.
+
 ## [0.4.1] - 2026-09-05
 
 ### Changed
