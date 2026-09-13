@@ -46,7 +46,7 @@ Git installs run a `prepare` build that pnpm blocks until allowlisted: add the e
 ### Dependencies
 
 - Node.js 20+.
-- `@deepseek-ai/dsh` with the web profile; tested against 0.1.1-rc.2 and 0.1.2-rc.1. See [Compatibility](#compatibility).
+- `@deepseek-ai/dsh` with the web profile; tested against 0.1.1-rc.2, 0.1.2-rc.1, and 0.1.5-rc.2. See [Compatibility](#compatibility).
 - All runtime dependencies are peers provided by DSH.
 
 ### Manual wiring
@@ -99,7 +99,9 @@ If both forms are active at once, both contribute their own prompt section; pick
 
 ## Compatibility
 
-Tested against `@deepseek-ai/dsh` 0.1.1-rc.2 and 0.1.2-rc.1 (web profile). The 0.1.2 audit found no breaking API change for this plugin: `settings.register/get/update`, `systemPrompt.section`, the typert `Remote` mount, the gateway `$mount` contract, `slots.inject/register`, the `settings.section` slot, the `dsh.bundle.patch` install path, and the dynamic-plugin builtins all kept their shapes.
+Tested against `@deepseek-ai/dsh` 0.1.1-rc.2, 0.1.2-rc.1, and 0.1.5-rc.2 (web profile). The 0.1.2 and 0.1.5 audits found no breaking API change for this plugin: `settings.register/get/update`, `systemPrompt.section`, the typert `Remote` mount, the gateway `$mount` contract, `slots.inject/register`, the `settings.section` slot, the `dsh.bundle.patch` install path, and the dynamic-plugin builtins all kept their shapes.
+
+The 0.1.5 line split the system-prompt persona: the service config key `persona` became `personaPrefix`, and the section `deployment:persona` became `deployment:persona-prefix`. This plugin sets neither key, so its sections are unaffected; a deployment overlay that sets the old key must rename it.
 
 The client manifest lists both harness bootstraps under `dsh.client.inject` (`@deepseek-ai/dsh-client-runtime` for 0.1.1-rc.x, `@deepseek-ai/dsh-client-web` for 0.1.2-rc.1 and later): 0.1.2 dissolved the old runtime package, and every loader so far silently skips an inject name it does not ship, so one manifest works on both lines.
 

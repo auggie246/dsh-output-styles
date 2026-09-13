@@ -4,6 +4,26 @@ All notable changes to this project are documented in this file. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-09-13
+
+### Changed
+
+- Compatibility with `@deepseek-ai/dsh` 0.1.5-rc.2 while staying on
+  0.1.1-rc.2 and 0.1.2-rc.1. The tag-to-tag audit (1486 commits) found no
+  breaking API change for this plugin: `settings.register/get/update`,
+  `systemPrompt.section`, the `Remote` decorator + `TypertRemoteService`
+  mount, the gateway `$mount` descriptor contract and `{ok, value}`
+  envelope, the `slots.inject/register` contract, the `settings.section`
+  slot, the `dsh.bundle.patch` install path, and the dynamic-plugin
+  builtins (`harness.handle`, `host.call`, `styles.insert`) all kept their
+  shapes.
+- `@deepseek-ai/dsh-typert-protocol` peer range adds a `^0.1.5-rc.1`
+  clause. Strict semver matches a prerelease only on the same
+  major.minor.patch tuple, so 0.1.5-rc.2 resolved against no existing
+  clause: npm refuses the install, and pnpm can pull a second, older
+  protocol copy that mounts a remote service with no methods (the TYPERT
+  manifest ownership crash documented since 0.2.0).
+
 ## [0.4.2] - 2026-09-06
 
 ### Added
