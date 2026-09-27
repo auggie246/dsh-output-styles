@@ -29,8 +29,14 @@ const SHELL_RELATIVE = join(
   'node_modules', '@deepseek-ai', 'dsh-client-ui-settings-general', 'lib', 'client.js',
 )
 
+// DSH renamed its icon exports between harness lines: 0.1.5 and earlier ship
+// `IconDataOutline16`, 0.1.7 ships `IconDataOutlineMedium`. The models branch
+// is the anchor either way; capture the suffix so the inserted edit icon uses
+// the same convention as the shell being patched.
+const DEFAULT_ICON_BASE = 'IconEditOutline'
+
 function parseArgs(argv) {
-  const options = { revert: false, icon: 'IconEditOutline16', dshRoot: process.env.DSH_ROOT }
+  const options = { revert: false, icon: undefined, dshRoot: process.env.DSH_ROOT }
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]
     if (arg === '--revert') options.revert = true
@@ -68,8 +74,9 @@ function locateShellFile(dshRoot) {
   process.exit(1)
 }
 
-/** The models branch, with every build-generated identifier captured. */
-const MODELS_BRANCH = /(\t+)if \(id === "models"\) return \(0, ([A-Za-z_$][\w$]*)\.jsx\)\(([A-Za-z_$][\w$]*)\.IconDataOutline16, \{\n\t+className: ([A-Za-z_$][\w$]*)\.navIcon,\n\t+size: 16\n\t+\}\);/
+/** The models branch, with every build-generated identifier captured.
+ * The icon suffix (`16` on 0.1.5, `Medium` on 0.1.7) is captured separately. */
+const MODELS_BRANCH = /(\t+)if \(id === "models"\) return \(0, ([A-Za-z_$][\w$]*)\.jsx\)\(([A-Za-z_$][\w$]*)\.IconDataOutline(16|Medium), \{\n\t+className: ([A-Za-z_$][\w$]*)\.navIcon,\n\t+size: 16\n\t+\}\);/
 
 function buildOutputStylesBranch(indent, jsxRuntime, primitivesModule, cssModule, iconName) {
   return [
@@ -111,8 +118,10 @@ if (match === null) {
   )
   process.exit(1)
 }
-const [, indent, jsxRuntime, primitivesModule, cssModule] = match
-const insert = `\n${buildOutputStylesBranch(indent, jsxRuntime, primitivesModule, cssModule, options.icon)}`
+const [, indent, jsxRuntime, primitivesModule, iconSuffix, cssModule] = match
+// Match the shell's own icon convention unless the caller forced one.
+const iconName = options.icon ?? `${DEFAULT_ICON_BASE}${iconSuffix}`
+const insert = `\n${buildOutputStylesBranch(indent, jsxRuntime, primitivesModule, cssModule, iconName)}`
 writeFileSync(file, source.replace(match[0], `${match[0]}${insert}`))
 console.log(`Patched ${file}`)
-console.log(`The output-styles nav row now uses ${options.icon}. Restart dsh web, then refresh the page.`)
+console.log(`The output-styles nav row now uses ${iconName}. Restart dsh web, then refresh the page.`)

@@ -4,6 +4,57 @@ All notable changes to this project are documented in this file. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-09-26
+
+### Changed
+
+- Compatibility with `@deepseek-ai/dsh` 0.1.7-rc.2. This is now the **only**
+  supported line: 0.1.1-rc.2, 0.1.2-rc.1, and 0.1.5-rc.x were dropped.
+  Unlike the earlier compatibility releases, 0.1.7 is a real source change —
+  it replaced two surfaces this plugin builds on, and neither replacement is
+  available on the older lines.
+- **Typert codecs now carry a `create()` factory.** `dsh-typert-loader`
+  0.1.7 rejects any strict codec without one:
+  `typert-loader: <pkg> invocation "…" result codec has no create() factory`.
+  The codec used to carry an `_zod`-backed `schema` object instead. Both
+  `lib/remote.js` and `lib/client.js` now build codecs with a lazy
+  `create()` returning the `{ parse }` capability the gateway calls, so the
+  `outputStyles` remote service registers again.
+- **Editable settings moved to volatile Config.** `ctx.settings.register(ns,
+  schema, options)` no longer exists in 0.1.7. `lib/index.js` now exports a
+  `Config` whose editable fields are `schemastery` `.volatile()` references
+  (`selectedId`, `userStyles`), reads them with `.get()`, and persists with
+  `ctx.settings.update('output-styles', patch)`. The Loader commits a
+  volatile-only config change into the running plugin's references without
+  remounting it, so style changes still apply from the next model step.
+- The auto-generated settings form is disabled
+  (`settings.configure({ auto: false })`) so the plugin's own Settings page is
+  the only `output-styles` section.
+- User styles now persist in the `output-styles` entry's `config` in the
+  profile patch (`~/.dsh/profiles/<profile>/cordis.patch.yml`) rather than in
+  `~/.dsh/settings.yaml`. The legacy `settings.yaml` section is imported once
+  by DSH 0.1.7 itself.
+- The reported "only one custom style" symptom is expected to disappear with
+  the activation fix: with `apply()` throwing, the `outputStyles` service never
+  mounted, so the Settings page could not round-trip the style list. Replaying
+  the 0.5.0 controller against a faithful 0.1.5 settings service stored three
+  styles correctly, so this was not an independent write bug.
+- Peer ranges narrowed: `@deepseek-ai/dsh-typert-protocol` is now
+  `^0.1.7-rc.1`, `@deepseek-ai/schemastery` is `^3.18.4` (the first line with
+  `.volatile()`), and `@deepseek-ai/cordis` is `~4.0.4`.
+- `scripts/patch-dsh-settings-nav-icon.mjs` now works on both icon conventions:
+  0.1.5 and earlier export `IconDataOutline16` / `IconEditOutline16`, while
+  0.1.7 exports `IconDataOutlineMedium` / `IconEditOutlineMedium`. The models
+  branch is still the anchor, but the icon suffix is captured from the shell
+  being patched, so the script inserts `IconEditOutlineMedium` on 0.1.7 and
+  `IconEditOutline16` on 0.1.5. `--icon` still overrides the name.
+- `dsh.client.inject` lists only `@deepseek-ai/dsh-client-web`; the legacy
+  `@deepseek-ai/dsh-client-runtime` bootstrap is gone.
+
+### Removed
+
+- Support for `@deepseek-ai/dsh` 0.1.1-rc.2, 0.1.2-rc.1, and 0.1.5-rc.x.
+
 ## [0.5.0] - 2026-09-13
 
 ### Changed

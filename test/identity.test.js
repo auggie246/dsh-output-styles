@@ -51,23 +51,46 @@ test('composition example resolves the installed package name', async () => {
   assert.match(example, new RegExp(`name: '${pkg.name.replace(/[/@]/g, (c) => `\\${c}`)}'`))
 })
 
-test('client manifest injects both harness bootstraps (legacy and 0.1.2+)', () => {
+test('client manifest injects the current web bootstrap', () => {
   const client = pkg.dsh.client
   assert.equal(client.platform, 'web')
-  // dsh-client-runtime was the web bootstrap up to 0.1.1-rc.2; 0.1.2-rc.1
-  // dissolved it into dsh-client-web. Both loaders skip unknown inject
-  // names, so listing both keeps the ordering edge on each harness.
-  assert.ok(client.inject.includes('@deepseek-ai/dsh-client-runtime'), 'legacy bootstrap missing from dsh.client.inject')
-  assert.ok(client.inject.includes('@deepseek-ai/dsh-client-web'), 'current bootstrap missing from dsh.client.inject')
+  // 0.1.7 is the only supported line. dsh-client-web is its web bootstrap;
+  // the legacy dsh-client-runtime that 0.1.1-rc.x shipped is gone.
+  assert.deepEqual(client.inject, ['@deepseek-ai/dsh-client-web'])
 })
 
-test('typert-protocol peer range admits every supported harness prerelease', () => {
+test('typert-protocol peer range admits only the 0.1.7 harness line', () => {
   const range = pkg.peerDependencies['@deepseek-ai/dsh-typert-protocol']
   // Strict semver only matches a prerelease when a comparator carries a
-  // prerelease tag on the same major.minor.patch tuple, so each supported
-  // harness line needs its own caret clause.
-  assert.match(range, /\^0\.1\.0-rc\.7/)
-  assert.match(range, /\^0\.1\.1-rc\.2/)
-  assert.match(range, /\^0\.1\.2-rc\.1/)
-  assert.match(range, /\^0\.1\.5-rc\.1/)
+  // prerelease tag on the same major.minor.patch tuple. 0.1.7 replaced the
+  // codec `schema` property with a `create()` factory, so the older
+  // per-tuple clauses cannot be honoured any more and were dropped.
+  assert.match(range, /\^0\.1\.7-rc\.1/)
+  assert.doesNotMatch(range, /0\.1\.5/)
+  assert.doesNotMatch(range, /0\.1\.2/)
+  assert.doesNotMatch(range, /0\.1\.1/)
+  assert.doesNotMatch(range, /0\.1\.0/)
+})
+
+test('schemastery peer range admits the volatile-aware line', () => {
+  const range = pkg.peerDependencies['@deepseek-ai/schemastery']
+  // `.volatile()` (the only editable-config mechanism in 0.1.7) first appears
+  // in 3.18.3; the 0.1.7 harness ships 3.18.4.
+  assert.match(range, /\^3\.18\.4/)
+})
+
+test('host half exports a Config schema with volatile editable fields', async () => {
+  const hostSource = await readFile(new URL('../lib/index.js', import.meta.url), 'utf8')
+  assert.match(hostSource, /^export const Config = z\.object\(/m, 'lib/index.js must export the plugin Config schema')
+  assert.match(hostSource, /\.volatile\(\)/, 'editable Config fields must be volatile')
+})
+
+test('codecs expose a create() factory and no legacy schema property', () => {
+  for (const [label, source] of [
+    ['lib/remote.js', remoteSource],
+    ['lib/client.js', clientSource],
+  ]) {
+    assert.match(source, /create: schemaFor\(parse\)/, `${label} must build codecs with a create() factory`)
+    assert.doesNotMatch(source, /_zod:/, `${label} must not carry the removed _zod-backed schema`)
+  }
 })

@@ -5,7 +5,9 @@
 # then restart `dsh web`.
 #
 # `name` must match the installed package name (npm name). `id` is the local
-# cordis service id and does not need to match.
+# cordis service id AND the settings namespace the plugin reads and writes, so
+# keep it `output-styles` unless you are deliberately starting a fresh set of
+# stored styles under a different id.
 #
 # Remove it (and run `dsh plugin --profile web remove @auggieteo/dsh-output-styles`) to uninstall.
 

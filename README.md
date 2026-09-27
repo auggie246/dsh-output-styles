@@ -6,7 +6,7 @@
 
 Persistent output styles for DeepSeek Harness Web: pick a built-in style or create named styles from the Settings page
 
-The plugin adds an **Output Style** page to the `dsh web` Settings dialog. Pick a built-in style, or create named styles with Markdown instructions. The selected style enters every agent's system prompt from the next model step — no restart needed. User styles persist across restarts in `~/.dsh/settings.yaml`, in the `output-styles` namespace.
+The plugin adds an **Output Style** page to the `dsh web` Settings dialog. Pick a built-in style, or create named styles with Markdown instructions. The selected style enters every agent's system prompt from the next model step — no restart needed. User styles persist across restarts in the `output-styles` entry's `config` in the profile patch.
 
 The package name is scoped on npm, `@auggieteo/dsh-output-styles`; the repository and folder are `dsh-output-styles`.
 
@@ -46,7 +46,7 @@ Git installs run a `prepare` build that pnpm blocks until allowlisted: add the e
 ### Dependencies
 
 - Node.js 20+.
-- `@deepseek-ai/dsh` with the web profile; tested against 0.1.1-rc.2, 0.1.2-rc.1, and 0.1.5-rc.2. See [Compatibility](#compatibility).
+- `@deepseek-ai/dsh` with the web profile; tested against 0.1.7-rc.2. See [Compatibility](#compatibility).
 - All runtime dependencies are peers provided by DSH.
 
 ### Manual wiring
@@ -59,7 +59,7 @@ Only when managing dependencies by hand: append the composition row from [`cordi
       name: "@auggieteo/dsh-output-styles"
 ```
 
-The `name` must match the installed package name; the `id` is your local cordis service id. Skip this row when the package is already listed under `dsh.profile.bundles` — the bundle patch supplies it.
+The `name` must match the installed package name; the `id` is your local cordis service id and doubles as the settings namespace holding your stored styles. Skip this row when the package is already listed under `dsh.profile.bundles` — the bundle patch supplies it.
 
 ## Usage
 
@@ -68,7 +68,7 @@ Open **Settings → Output Style**:
 - Pick a built-in style, or create a named style with a name, an optional description, and Markdown instructions.
 - **Edit** turns a style's own row into the edit form; **Save** or **Cancel** restores it. The create form hides while an edit is open.
 - The selected style enters every agent's system prompt from the **next model step** — no restart needed.
-- User styles persist across restarts in `~/.dsh/settings.yaml` (the `output-styles` namespace). The style section is global to the deployment, not per-session.
+- User styles persist across restarts in the `output-styles` entry's `config` in `~/.dsh/profiles/<profile>/cordis.patch.yml`. The entry is global to the profile, not per-session.
 
 ### Pasting style files
 
@@ -99,11 +99,18 @@ If both forms are active at once, both contribute their own prompt section; pick
 
 ## Compatibility
 
-Tested against `@deepseek-ai/dsh` 0.1.1-rc.2, 0.1.2-rc.1, and 0.1.5-rc.2 (web profile). The 0.1.2 and 0.1.5 audits found no breaking API change for this plugin: `settings.register/get/update`, `systemPrompt.section`, the typert `Remote` mount, the gateway `$mount` contract, `slots.inject/register`, the `settings.section` slot, the `dsh.bundle.patch` install path, and the dynamic-plugin builtins all kept their shapes.
+Tested against `@deepseek-ai/dsh` 0.1.7-rc.2 (web profile). This is the only supported line: **0.1.1-rc.2, 0.1.2-rc.1, and 0.1.5-rc.x were dropped in 0.6.0.**
 
-The 0.1.5 line split the system-prompt persona: the service config key `persona` became `personaPrefix`, and the section `deployment:persona` became `deployment:persona-prefix`. This plugin sets neither key, so its sections are unaffected; a deployment overlay that sets the old key must rename it.
+0.1.7 replaced two surfaces this plugin depends on, so the older lines cannot be supported side by side:
 
-The client manifest lists both harness bootstraps under `dsh.client.inject` (`@deepseek-ai/dsh-client-runtime` for 0.1.1-rc.x, `@deepseek-ai/dsh-client-web` for 0.1.2-rc.1 and later): 0.1.2 dissolved the old runtime package, and every loader so far silently skips an inject name it does not ship, so one manifest works on both lines.
+- **Typert codecs.** A strict codec must now carry a `create()` factory returning the process-local schema; 0.1.5 instead required an `_zod`-backed `schema` property. The plugin's codecs carry `create()` only.
+- **Editable settings.** `ctx.settings.register(ns, schema, …)` is gone. Editable configuration is now declared as `schemastery` `.volatile()` fields on the plugin's own exported `Config` and written with `ctx.settings.update(<profile entry id>, patch)`. `.volatile()` first appears in `@deepseek-ai/schemastery` 3.18.3 (0.1.7 ships 3.18.4) and does **not** exist in the schemastery the 0.1.5 harness ships, so the two models are mutually exclusive.
+
+Because the plugin's Config fields are volatile, a write updates them in place: the Loader commits a volatile-only config change into the running plugin's references without remounting it, and the prompt section re-reads the live value on the next assembly. Changes therefore still take effect from the next model step with no restart.
+
+The system-prompt placement is unchanged: the `output-style` section still sits at order 5, right after the persona prefix.
+
+The client manifest lists a single bootstrap under `dsh.client.inject`: `@deepseek-ai/dsh-client-web`. `@deepseek-ai/dsh-client-runtime` (the 0.1.1-rc.x bootstrap) is no longer published and was removed.
 
 ## Development
 
