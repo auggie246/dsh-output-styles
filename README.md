@@ -46,7 +46,7 @@ Git installs run a `prepare` build that pnpm blocks until allowlisted: add the e
 ### Dependencies
 
 - Node.js 20+.
-- `@deepseek-ai/dsh` with the web profile; tested against 0.1.7-rc.2. See [Compatibility](#compatibility).
+- `@deepseek-ai/dsh` with the web profile; tested against 0.2.0-rc.2. See [Compatibility](#compatibility).
 - All runtime dependencies are peers provided by DSH.
 
 ### Manual wiring
@@ -99,18 +99,18 @@ If both forms are active at once, both contribute their own prompt section; pick
 
 ## Compatibility
 
-Tested against `@deepseek-ai/dsh` 0.1.7-rc.2 (web profile). This is the only supported line: **0.1.1-rc.2, 0.1.2-rc.1, and 0.1.5-rc.x were dropped in 0.6.0.**
+Tested against `@deepseek-ai/dsh` 0.2.0-rc.2 (web profile). This is the only supported line: **0.1.1-rc.2, 0.1.2-rc.1, 0.1.5-rc.x, and 0.1.7-rc.x were dropped in 0.7.0.**
 
-0.1.7 replaced two surfaces this plugin depends on, so the older lines cannot be supported side by side:
+0.1.7 replaced the two surfaces this plugin depends on, and 0.2.0 kept both contracts, so the plugin source is unchanged from 0.6.0:
 
-- **Typert codecs.** A strict codec must now carry a `create()` factory returning the process-local schema; 0.1.5 instead required an `_zod`-backed `schema` property. The plugin's codecs carry `create()` only.
-- **Editable settings.** `ctx.settings.register(ns, schema, …)` is gone. Editable configuration is now declared as `schemastery` `.volatile()` fields on the plugin's own exported `Config` and written with `ctx.settings.update(<profile entry id>, patch)`. `.volatile()` first appears in `@deepseek-ai/schemastery` 3.18.3 (0.1.7 ships 3.18.4) and does **not** exist in the schemastery the 0.1.5 harness ships, so the two models are mutually exclusive.
+- **Typert codecs.** A strict codec carries a `create()` factory returning the process-local schema.
+- **Editable settings.** Editable configuration is declared as `schemastery` `.volatile()` fields on the plugin's own exported `Config` and written with `ctx.settings.update(<profile entry id>, patch)`. `.volatile()` first appears in `@deepseek-ai/schemastery` 3.18.3; the harness ships 3.18.4.
+
+The 0.7.0 release is therefore metadata-only: the `@deepseek-ai/dsh-typert-protocol` peer range moves to `^0.2.0-rc.1`, and the client manifest stops naming `@deepseek-ai/dsh-client-web`, which is published only as the page-boot library and declares no client module. `dsh.client.inject` is informational (it does not drive Cordis service injection), so it now names the provider of the `remote` service the Settings page mounts into: `@deepseek-ai/dsh-api-gateway`. The `slots` service the page registers its section with comes from the shell itself.
 
 Because the plugin's Config fields are volatile, a write updates them in place: the Loader commits a volatile-only config change into the running plugin's references without remounting it, and the prompt section re-reads the live value on the next assembly. Changes therefore still take effect from the next model step with no restart.
 
 The system-prompt placement is unchanged: the `output-style` section still sits at order 5, right after the persona prefix.
-
-The client manifest lists a single bootstrap under `dsh.client.inject`: `@deepseek-ai/dsh-client-web`. `@deepseek-ai/dsh-client-runtime` (the 0.1.1-rc.x bootstrap) is no longer published and was removed.
 
 ## Development
 

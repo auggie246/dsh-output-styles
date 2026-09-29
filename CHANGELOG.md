@@ -4,6 +4,38 @@ All notable changes to this project are documented in this file. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-09-30
+
+### Changed
+
+- Compatibility with `@deepseek-ai/dsh` 0.2.0-rc.2. This is now the **only**
+  supported line: 0.1.1-rc.2, 0.1.2-rc.1, 0.1.5-rc.x, and 0.1.7-rc.x were
+  dropped. Without the bump the harness refuses to mount the bundle:
+  `Plugin @auggieteo/dsh-output-styles@0.6.0 is incompatible with dsh
+  0.2.0-rc.2: peerDependencies
+  {"@deepseek-ai/dsh-typert-protocol":"^0.1.7-rc.1"}`.
+- **The source is unchanged.** 0.2.0 keeps both contracts 0.1.7 introduced: a
+  strict codec still carries a lazy `create()` factory, and editable settings
+  are still `schemastery` `.volatile()` Config fields written through
+  `ctx.settings.update(<profile entry id>, patch)`. A file-level comparison of
+  `dsh-typert-protocol`, `dsh-settings`, `dsh-system-prompt`,
+  `dsh-typert-loader`, and `dsh-client-modules` between 0.1.7-rc.2 and
+  0.2.0-rc.2 found no change on any surface this plugin uses, so this is a
+  metadata-only release.
+- `@deepseek-ai/dsh-typert-protocol` peer range is now `^0.2.0-rc.1`.
+- `dsh.client.inject` now names `@deepseek-ai/dsh-api-gateway` instead of
+  `@deepseek-ai/dsh-client-web`. 0.2.0 still publishes `dsh-client-web`, but
+  only as the page-boot library — it declares no client module, so the old
+  value was a dangling informational edge (it never drove Cordis service
+  injection). `@deepseek-ai/dsh-api-gateway` is the provider of the `remote`
+  service the Settings page mounts the `outputStyles` remote into; the `slots`
+  service comes from the shell.
+
+### Removed
+
+- Support for `@deepseek-ai/dsh` 0.1.1-rc.2, 0.1.2-rc.1, 0.1.5-rc.x, and
+  0.1.7-rc.x.
+
 ## [0.6.0] - 2026-09-26
 
 ### Changed

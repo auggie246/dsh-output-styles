@@ -51,21 +51,24 @@ test('composition example resolves the installed package name', async () => {
   assert.match(example, new RegExp(`name: '${pkg.name.replace(/[/@]/g, (c) => `\\${c}`)}'`))
 })
 
-test('client manifest injects the current web bootstrap', () => {
+test('client manifest injects the remote-service provider', () => {
   const client = pkg.dsh.client
   assert.equal(client.platform, 'web')
-  // 0.1.7 is the only supported line. dsh-client-web is its web bootstrap;
-  // the legacy dsh-client-runtime that 0.1.1-rc.x shipped is gone.
-  assert.deepEqual(client.inject, ['@deepseek-ai/dsh-client-web'])
+  // 0.2.0 is the only supported line. `@deepseek-ai/dsh-client-web` is still
+  // published, but only as the page-boot library — it declares no client
+  // module, so naming it was a dangling informational edge. `ctx.remote`
+  // comes from `@deepseek-ai/dsh-api-gateway`; `ctx.slots` from the shell.
+  assert.deepEqual(client.inject, ['@deepseek-ai/dsh-api-gateway'])
 })
 
-test('typert-protocol peer range admits only the 0.1.7 harness line', () => {
+test('typert-protocol peer range admits only the 0.2.0 harness line', () => {
   const range = pkg.peerDependencies['@deepseek-ai/dsh-typert-protocol']
   // Strict semver only matches a prerelease when a comparator carries a
-  // prerelease tag on the same major.minor.patch tuple. 0.1.7 replaced the
-  // codec `schema` property with a `create()` factory, so the older
-  // per-tuple clauses cannot be honoured any more and were dropped.
-  assert.match(range, /\^0\.1\.7-rc\.1/)
+  // prerelease tag on the same major.minor.patch tuple. 0.2.0 keeps the
+  // 0.1.7 codec contract (a lazy `create()` factory), so the payload is
+  // unchanged; only the harness line the range admits moves forward.
+  assert.match(range, /\^0\.2\.0-rc\.1/)
+  assert.doesNotMatch(range, /0\.1\.7/)
   assert.doesNotMatch(range, /0\.1\.5/)
   assert.doesNotMatch(range, /0\.1\.2/)
   assert.doesNotMatch(range, /0\.1\.1/)
@@ -74,8 +77,8 @@ test('typert-protocol peer range admits only the 0.1.7 harness line', () => {
 
 test('schemastery peer range admits the volatile-aware line', () => {
   const range = pkg.peerDependencies['@deepseek-ai/schemastery']
-  // `.volatile()` (the only editable-config mechanism in 0.1.7) first appears
-  // in 3.18.3; the 0.1.7 harness ships 3.18.4.
+  // `.volatile()` (the only editable-config mechanism on the supported line)
+  // first appears in 3.18.3; the harness ships 3.18.4.
   assert.match(range, /\^3\.18\.4/)
 })
 
